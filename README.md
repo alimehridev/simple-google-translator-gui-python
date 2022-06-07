@@ -1,1 +1,1 @@
-# a simple google translator gui app python
+# a simple google translator gui app by python
