@@ -5,22 +5,14 @@ from tkinter import ttk
 import requests
 import json
 import subprocess
+import threading
 
-def createEntry(value = ""):
-    entFrame = ttk.Frame(frame, padding="0 0 0 7")
-    global lbl
-    lbl = ttk.Label(entFrame, text="Word: ")
-    lbl.grid()
-    global ent
-    ent = tkinter.Entry(entFrame, width="50")
-    ent.focus()
+def one_less_word(ev):
+    value = ent.get().split(" ")
+    value = value[0:-1]
+    value = " ".join(value)
+    ent.delete(0, tkinter.END)
     ent.insert(0, value)
-    ent.grid()
-    entFrame.pack(fill="x")
-
-# def createBtn():
-#     btn = tkinter.Button(frame, text="Translate", command=translate)
-#     btn.pack(fill="x")
 
 def translate(ev):
     word = ent.get()
@@ -41,13 +33,39 @@ def translate(ev):
     subprocess.Popen(['notify-send', trans])
     root.destroy()
 
+
+
+def auto_complete_req(q):
+    req = requests.get("https://api.datamuse.com/words?sp=" + q + "*")
+    values = json.loads(req.text)
+    values_list = []
+    for v in values:
+        values_list.append(v['word'])
+    print(values_list)
+
+
+def callback(sv):
+    q = sv.get()
+    if(q != ""):
+        threading.Thread(target=auto_complete_req, args=(q, )).start()
+    
 root = tkinter.Tk()
 root.title("Google Translator")
+
 frame = ttk.Frame(root, padding="12 12 12 12")
 frame.pack(fill="x")
 
+sv = tkinter.StringVar()
+sv.trace("w", lambda name, index, mode, sv=sv: callback(sv))
 
-createEntry()
+
+entFrame = ttk.Frame(frame, padding="0 0 0 0")
+ent = tkinter.Entry(entFrame, width="50", textvariable=sv)
+ent.focus()
+ent.grid()
+entFrame.pack(fill="x")
+
 root. bind('<Return>', translate)
+root. bind('<Control-BackSpace>', one_less_word)
 
 root.mainloop()
