@@ -7,6 +7,17 @@ import json
 import subprocess
 import threading
 
+
+def words_list_selected(ev):
+    try:
+        selected_indicates = words_list.curselection()
+        selected = words_list.get(selected_indicates[0])
+        last_word = ent.get()
+        ent.delete(0, tkinter.END)
+        ent.insert(0, selected)
+    except:
+        pass
+
 def one_less_word(ev):
     value = ent.get().split(" ")
     value = value[0:-1]
@@ -34,13 +45,14 @@ def translate(ev):
     root.destroy()
 
 
-
 def auto_complete_req(q):
     req = requests.get("https://api.datamuse.com/words?sp=" + q + "*")
     values = json.loads(req.text)
     values_list = []
     for v in values:
         values_list.append(v['word'])
+    words_list.config(listvariable=tkinter.StringVar(value=values_list))
+    words_list.pack(fill="x")
     print(values_list)
 
 
@@ -48,7 +60,8 @@ def callback(sv):
     q = sv.get()
     if(q != ""):
         threading.Thread(target=auto_complete_req, args=(q, )).start()
-    
+    else:
+        words_list.forget()
 root = tkinter.Tk()
 root.title("Google Translator")
 
@@ -64,6 +77,9 @@ ent = tkinter.Entry(entFrame, width="50", textvariable=sv)
 ent.focus()
 ent.grid()
 entFrame.pack(fill="x")
+
+words_list = tkinter.Listbox(frame, height=10, selectmode='extended', fg="gray")
+words_list.bind("<<ListboxSelect>>", words_list_selected)
 
 root. bind('<Return>', translate)
 root. bind('<Control-BackSpace>', one_less_word)
