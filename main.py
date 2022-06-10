@@ -8,11 +8,13 @@ class App(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
-        
+        self.lastWord = ""
+
         self.label = tk.Label(self, text="Word : ")
         self.label.grid(row=0, column=0)
         self.wordEnt = tk.Entry(self, width="50")
         self.wordEnt.focus()
+        self.wordEnt.bind("<Control-BackSpace>", self.controlBackspacePressed)
         self.wordEnt.bind("<KeyRelease>", self.wordEntKeyRelease)
         self.wordEnt.bind("<Down>", self.keyDownPressed)
         self.wordEnt.bind("<Return>", self.keyEnterPressed)
@@ -22,7 +24,7 @@ class App(tk.Frame):
         self.wordList.bind("<Down>", self.wordListKeyPressed)
         self.wordList.bind("<Up>", self.wordListKeyPressed)
         self.wordList.bind("<Return>", self.wordListEnterKeyPressed)
-
+        
         # Get env file info
         try:
             envFile = open("/home/.config/simple-google-translator-python/env.txt", "r")
@@ -39,22 +41,56 @@ class App(tk.Frame):
             self.srcLang = "auto" #source language
             self.desLang = "fa" #destination language
             
+    def controlBackspacePressed(self, event):
+        entryValue = self.wordEnt.get()
+        if(entryValue == ""):
+            return
+        entryValue = entryValue.split(" ")
+        entryValue.pop()
+        entryValue = " ".join(entryValue) + " "
+        self.wordEnt.delete(0, tk.END)
+        self.wordEnt.insert(0, entryValue)
+
     def keyDownPressed(self, event):
-        self.wordList.focus()
+        self.lastWord = self.wordEnt.get()
+        if(self.wordList.size() != 0):
+            self.wordList.focus()
+            self.wordList.select_set(0)
+            self.lastWord = self.wordEnt.get()
+            self.wordEnt.delete(0, tk.END)
+            self.wordEnt.insert(0, self.wordList.get(0))
     def keyEnterPressed(self, event):
         word = self.wordEnt.get()
         if(word != ""):
             self.translate(word)
         
+    def wordEntKeyRelease(self, event):
+        if (event.state == 20 and event.keysym == "BackSpace"):
+            return
+        if (event.keysym == "Down"):
+            return
+        word = self.wordEnt.get()
+        if(word.strip() == ""):
+            self.wordList.grid_forget()
+            return
+        else:
+            autoCompleteThread = threading.Thread(target=self.auto_complete_req, args=(word, ))
+            autoCompleteThread.start()
+
     def wordListKeyPressed(self, event):
         if (event.keysym == "Up"):
             if(self.wordList.curselection()[0] == 0):
-
+                self.wordEnt.delete(0, tk.END)
+                self.wordEnt.insert(0, self.lastWord)
                 self.wordEnt.focus()
+                return
+
         for i in self.wordList.curselection():
             if(event.keysym == "Up"):
                 w = self.wordList.get(self.wordList.curselection()[0] - 1)
             elif event.keysym == "Down":
+                if(i == self.wordList.size() - 1):
+                    return
                 w = self.wordList.get(self.wordList.curselection()[0] + 1)
             self.wordEnt.delete(0, tk.END)
             self.wordEnt.insert(0, w)
@@ -66,18 +102,6 @@ class App(tk.Frame):
             self.wordEnt.insert(0, word)
             self.wordEnt.focus()
             self.translate(self.wordEnt.get())
-        
-    def wordEntKeyRelease(self, event):
-        if (event.keysym == "Down"):
-            return
-
-        word = self.wordEnt.get()
-        if(word.strip() == ""):
-            self.wordList.grid_forget()
-            return
-        else:
-            autoCompleteThread = threading.Thread(target=self.auto_complete_req, args=(word, ))
-            autoCompleteThread.start()
 
     def auto_complete_req(self, q):
         req = requests.get("https://abadis.ir/ajaxcmd/getaclist/?exp=" + q)
