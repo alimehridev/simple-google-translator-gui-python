@@ -2,7 +2,7 @@ import tkinter as tk
 import threading
 import requests
 import json
-import subprocess
+from notification import Notification
 
 class App(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
@@ -20,7 +20,7 @@ class App(tk.Frame):
         self.wordEnt.bind("<Return>", self.keyEnterPressed)
         self.wordEnt.grid(row=0, column=1)
 
-        self.wordList = tk.Listbox(self, width="50")
+        self.wordList = tk.Listbox(self, width="50", fg="gray")
         self.wordList.bind("<Down>", self.wordListKeyPressed)
         self.wordList.bind("<Up>", self.wordListKeyPressed)
         self.wordList.bind("<Return>", self.wordListEnterKeyPressed)
@@ -130,9 +130,10 @@ class App(tk.Frame):
                 trans += ", " + i
         except:
             pass
-
-        subprocess.Popen(['notify-send', trans])
+        
         self.parent.destroy()
+        notification = Notification(text=trans)
+        # subprocess.Popen(['notify-send', trans])
 
 if __name__ == '__main__':
     root = tk.Tk()
