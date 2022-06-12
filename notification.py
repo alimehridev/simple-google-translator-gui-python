@@ -12,7 +12,6 @@ class Notification:
       self.grid = QGridLayout()
       self.win.setLayout(self.grid)
       self.win.setWindowOpacity(0.999)
-      self.win.mouseDoubleClickEvent = lambda event: self.exitApp()
 
       screen = self.app.primaryScreen().size()
       self.screenWidth = screen.width()
@@ -29,10 +28,7 @@ class Notification:
       self.textLabel = QLabel(text, self.win)
       self.grid.addWidget(self.textLabel, 1, 0)
       self.win.show()
-
+      QtCore.QTimer.singleShot(5000, self.app.exit)
       sys.exit(self.app.exec_())
-   
-   def exitApp(self):
-      self.app.quit()
 
 

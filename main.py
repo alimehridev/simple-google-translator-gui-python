@@ -1,7 +1,7 @@
 import tkinter as tk
-import threading
 import requests
 import json
+import threading
 from notification import Notification
 
 class App(tk.Frame):
