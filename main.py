@@ -133,7 +133,6 @@ class App(tk.Frame):
         
         self.parent.destroy()
         notification = Notification(text=trans)
-        # subprocess.Popen(['notify-send', trans])
 
 if __name__ == '__main__':
     root = tk.Tk()
